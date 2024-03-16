@@ -10,39 +10,44 @@ import configparser
 
 class CQ(feapder.AirSpider):
     __custom_setting__ = dict(
-        SPIDER_MAX_RETRY_TIMES=0,
-        LOG_LEVEL="INFO"
+        SPIDER_MAX_RETRY_TIMES=3,
+        LOG_LEVEL="INFO",
     )
 
     def start_requests(self):
-        url = "https://ids.gzist.edu.cn/lyuapServer/kaptcha"
-        yield feapder.Request(
-            url=url,
-            callback=self.parse_Login)
+        code_url = "https://ids.gzist.edu.cn/lyuapServer/kaptcha"
+        yield feapder.Request(url=code_url, callback=self.parse_tryLogin)
 
-    def parse_Login(self, request, response):
-        url = "https://ids.gzist.edu.cn/lyuapServer/v1/tickets"
+    def parse_tryLogin(self, request, response):
+        login_url = "https://ids.gzist.edu.cn/lyuapServer/v1/tickets"
         uid = response.json["uid"]
         code_base64_str = response.json["content"].split(",")[-1]
-        code_result = code_ocr(code_base64_str)
+        code_result = self.code_ocr(code_base64_str)
         print(f"验证码结果：{code_result}")
         post_data = {
             "username": USERNAME,
-            "password": encrypt_password(PASSWORD),
+            "password": self.encrypt_password(PASSWORD),
             "service": "https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/*default/index.do",
             "id": uid,
             "code": code_result
         }
+        login_response = feapder.Request(url=login_url, data=post_data).get_response().json
+        try:
+            params = {"ticket": login_response["ticket"]}
+        except KeyError:
+            if login_response["data"]["code"] == 'NOUSER':
+                print("用户名错误")
+                return
+            elif login_response["data"]["code"] == 'PASSERROR':
+                print("密码错误")
+                return
+            elif login_response["data"]["code"] == 'CODEFALSE':
+                print("验证码错误")
+                raise Exception(fr"验证码错误,尝试重新运行,{request.retry_times}")
+            raise Exception(fr"发生未知错误,尝试重新运行,{request.retry_times}")
+        jump_url = "https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/*default/index.do"
         yield feapder.Request(
-            url=url,
-            callback=self.parse_getCookie,
-            data=post_data)
-
-    def parse_getCookie(self, request, response):
-        url = "https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/*default/index.do"
-        params = {"ticket": response.json["ticket"]}
-        yield feapder.Request(
-            url=url,
+            url=jump_url,
             callback=self.parse_getSelRoleConfig,
             params=params)
 
@@ -71,46 +76,44 @@ class CQ(feapder.AirSpider):
         result = response.json["msg"]
         print(fr"查寝结果：{result}")
 
+    # 识别验证码
+    def code_ocr(self, code_base64_str):
+        replace_str = {"o": "0", "O": "0", "l": "1", "i": "1", "I": "1", "s": "5", "S": "5", "b": "6", "B": "8"}
+        ocr = ddddocr.DdddOcr(show_ad=False)
+        res = ocr.classification(self.base64_to_byte(code_base64_str))
+        for key, value in replace_str.items():
+            if key in res:
+                res = res.replace(key, value)
+        print(f"验证码：{res}")
+        code_result = eval(res[0:-1])
+        return code_result
 
-# 识别验证码
-def code_ocr(code_base64_str):
-    replace_str = {"o": "0", "O": "0", "l": "1", "i": "1", "I": "1", "s": "5", "S": "5", "b": "6", "B": "8"}
-    ocr = ddddocr.DdddOcr(show_ad=False)
-    res = ocr.classification(base64_to_byte(code_base64_str))
-    for key, value in replace_str.items():
-        if key in res:
-            res = res.replace(key, value)
-    print(f"验证码：{res}")
-    code_result = eval(res[0:-1])
-    return code_result
+    # base64字符串转二进制流
+    @staticmethod
+    def base64_to_byte(s):
+        """
+        将base64字符串转换为二进制流
+        :param s:
+        :return byte:
+        """
+        base64_byte = base64.b64decode(s)
+        return base64_byte
 
+    @staticmethod
+    def js_from_file(file_name):
+        """
+        读取js文件
+        :return:
+        """
+        with open(file_name, 'r', encoding='UTF-8') as file:
+            result = file.read()
+        return result
 
-# base64字符串转二进制流
-def base64_to_byte(s):
-    """
-    将base64字符串转换为二进制流
-    :param s:
-    :return byte:
-    """
-    base64_byte = base64.b64decode(s)
-    return base64_byte
-
-
-def js_from_file(file_name):
-    """
-    读取js文件
-    :return:
-    """
-    with open(file_name, 'r', encoding='UTF-8') as file:
-        result = file.read()
-    return result
-
-
-def encrypt_password(password):
-    # 编译加载js字符串
-    context1 = execjs.compile(js_from_file('./login.js'))
-    encrypted_password = context1.call("encrypt", password)
-    return encrypted_password
+    def encrypt_password(self, password):
+        # 编译加载js字符串
+        context1 = execjs.compile(self.js_from_file('./login.js'))
+        encrypted_password = context1.call("encrypt", password)
+        return encrypted_password
 
 
 def get_username_password_from_env():
@@ -143,12 +146,16 @@ def get_username_password():
     parser = argparse.ArgumentParser(description='获取用户名和密码')
     parser.add_argument('-e', '--env', action='store_true', help='从环境变量中获取用户名和密码')
     parser.add_argument('-c', '--config', type=str, help='读取配置文件获取用户名和密码')
+    parser.add_argument('-u', '--username', type=str, help='命令行输入用户名')
+    parser.add_argument('-p', '--password', type=str, help='命令行输入密码')
     args = parser.parse_args()
 
     if args.env:
         return get_username_password_from_env()
     elif args.config:
         return get_username_password_from_config(args.config, 'loginInfo')
+    elif args.username and args.password:
+        return args.username, args.password
     else:
         return get_username_password_manually()
 
