@@ -25,3 +25,9 @@
 ```-p```,```--password```命令行输入密码
 
 优先级：```-e```>```-c```>```-u```
+
+## 使用GitHub Actions自动查寝：
+先fork本仓库，然后在仓库的Settings->Secrets中添加名为```loginUserName```和```loginPassword```的secret，分别存储用户名和密码。
+![secrets.png](secrets.png)
+然后在仓库的Actions中手动运行，即可测试运行是否正常。
+![action.png](action.png)
