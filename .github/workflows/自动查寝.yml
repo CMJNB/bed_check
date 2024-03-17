@@ -1,0 +1,31 @@
+name: Python Auto Bed Check
+
+on: 
+  schedule:
+      # 设置启动时间，为 UTC 时间, UTC23点 对应北京时间早7点
+      - cron : '00 14 * * *'
+  workflow_dispatch:
+  
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Shanghai
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' 
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Run
+      run: |
+        python main.py -e
+      env:
+        loginUserName: ${{ secrets.loginUserName }}
+        loginPassword: ${{ secrets.loginPassword }}
