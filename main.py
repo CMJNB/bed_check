@@ -44,6 +44,9 @@ class CQ(feapder.AirSpider):
             elif login_response["data"]["code"] == 'CODEFALSE':
                 print("验证码错误")
                 raise Exception(fr"验证码错误,尝试重新运行,{request.retry_times}")
+            elif login_response["data"]["code"] == 'ISMODIFYPASS':
+                print("密码未修改")
+                return
             raise Exception(fr"发生未知错误,尝试重新运行,{request.retry_times}")
         jump_url = "https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/*default/index.do"
         yield feapder.Request(
