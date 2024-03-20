@@ -6,7 +6,7 @@ import ddddocr
 import feapder
 import argparse
 import configparser
-
+import requests
 
 class CQ(feapder.AirSpider):
     __custom_setting__ = dict(
@@ -168,7 +168,7 @@ def send_data(string):
             "content": string,
         }
     }
-    yield feapder.Request(url, json=data)
+    requests.post(url, json=data)
 
 if __name__ == '__main__':
     # 命令行参数 -e 获取环境变量作为输入，-c 读取配置文件,默认手动输入
