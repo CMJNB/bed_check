@@ -37,12 +37,15 @@ class CQ(feapder.AirSpider):
         except KeyError:
             if login_response["data"]["code"] == 'NOUSER':
                 print("用户名错误")
+                send_data(f"{USERNAME}: 用户名错误")
                 return
             elif login_response["data"]["code"] == 'PASSERROR':
                 print("密码错误")
+                send_data(f"{USERNAME}: 密码错误")
                 return
             elif login_response["data"]["code"] == 'CODEFALSE':
                 print("验证码错误")
+                send_data(f"{USERNAME}: 验证码错误")
                 raise Exception(fr"验证码错误,尝试重新运行,{request.retry_times}")
             raise Exception(fr"发生未知错误,尝试重新运行,{request.retry_times}")
         jump_url = "https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/*default/index.do"
@@ -75,6 +78,7 @@ class CQ(feapder.AirSpider):
     def parse(self, request, response):
         result = response.json["msg"]
         print(fr"查寝结果：{result}")
+        send_data(f"{USERNAME}查寝结果：{result}")
 
     # 识别验证码
     def code_ocr(self, code_base64_str):
@@ -174,6 +178,6 @@ if __name__ == '__main__':
     # 命令行参数 -e 获取环境变量作为输入，-c 读取配置文件,默认手动输入
     USERNAME, PASSWORD = get_username_password()
     print(f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}")
-    print(f"用户名：{USERNAME}")
-    send_data(f"{USERNAME}: GitHub测试")
-    # CQ().start()
+    print(f"用户名：{USERNAME},密码：{PASSWORD}")
+    send_data(f"{USERNAME}: 开始执行查寝任务")
+    CQ().start()
