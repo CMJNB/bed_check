@@ -123,8 +123,9 @@ class CQ(feapder.AirSpider):
 def get_username_password_from_env():
     username = os.environ.get("loginUserName")
     password = os.environ.get("loginPassword")
+    url=os.environ.get("keyUrl")
     if username and password:
-        return username, password
+        return username, password,url
     else:
         return None, None
 
@@ -176,8 +177,8 @@ def send_data(string):
 
 if __name__ == '__main__':
     # 命令行参数 -e 获取环境变量作为输入，-c 读取配置文件,默认手动输入
-    USERNAME, PASSWORD = get_username_password()
+    USERNAME, PASSWORD ,URL= get_username_password()
     print(f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}")
-    print(os.environ.get("KeyUrl"))
+    print(URL)
     # send_data(f"{USERNAME}: 开始执行查寝任务")
     # CQ().start()
