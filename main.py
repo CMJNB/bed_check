@@ -1,5 +1,5 @@
-import os
-import time
+import sys
+import feapder.utils.tools as tools
 import execjs
 import base64
 import ddddocr
@@ -17,6 +17,9 @@ class CQ(feapder.AirSpider):
     )
 
     def start_requests(self):
+        log.info("开始执行")
+        log.info(f"用户名：{USERNAME}")
+        self.send_msg("开始执行", level="INFO")
         code_url = "https://ids.gzist.edu.cn/lyuapServer/kaptcha"
         yield feapder.Request(url=code_url, callback=self.parse_tryLogin)
 
@@ -80,6 +83,10 @@ class CQ(feapder.AirSpider):
     def parse(self, request, response):
         result = response.json["msg"]
         print(fr"查寝结果：{result}")
+    @staticmethod
+    def send_msg(msg, level="DEBUG", message_prefix=""):
+        msg = f"{USERNAME}\n{msg}"
+        tools.send_msg(msg, level=level, message_prefix=message_prefix)
 
     # 识别验证码
     def code_ocr(self, code_base64_str):
@@ -166,6 +173,11 @@ def get_username_password():
 if __name__ == '__main__':
     set_setting_from_env()
     USERNAME, PASSWORD = get_username_password()
-    print(f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}")
-    print(f"用户名：{USERNAME}")
-    CQ().start()
+    if USERNAME and PASSWORD:
+        CQ().start()
+    else:
+        if not USERNAME:
+            log.error("::error:: 账号不能为空")
+        if not PASSWORD:
+            log.error("::error:: 密码不能为空")
+        sys.exit(1)
