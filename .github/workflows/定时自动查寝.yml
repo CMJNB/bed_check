@@ -1,4 +1,4 @@
-name: Python Auto Bed Check
+name: 定时自动查寝
 
 on: 
   schedule:
