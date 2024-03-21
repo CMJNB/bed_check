@@ -4,9 +4,10 @@ on:
   schedule:
       # 设置启动时间，为 UTC 时间, UTC14点 对应北京时间22点: '00 14 * * *'
       # https://docs.github.com/zh/actions/using-workflows/events-that-trigger-workflows#schedule
-      - cron : ${{ vars.CRON }}
+      - cron : $cron_var
   workflow_dispatch:
-  
+env:
+  cron_var: ${{ vars.CRON }}
 permissions:
   contents: read
 
