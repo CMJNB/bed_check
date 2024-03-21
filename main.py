@@ -85,8 +85,18 @@ class CQ(feapder.AirSpider):
             cookies=cookies)
 
     def parse(self, request, response):
-        result = response.json["msg"]
-        print(fr"查寝结果：{result}")
+        try:
+            result = response.json["msg"]
+            if result == ' 当前时段不在考勤时段内':
+                log.warning(f"::warning:: {result}")
+                self.send_msg(result, "INFO")
+                return
+            elif result == ' 您已签到,请勿重复签到':
+                pass
+            log.info(fr"查寝结果：{result}")
+            self.send_msg(result, "INFO")
+        except Exception as e:
+            log.error(f"::error:: 查寝失败，结果未知：{e}")
 
     def exception_request(self, request, response, e: Exception):
         if type(e) is self.InfoError:
