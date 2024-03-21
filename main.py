@@ -179,6 +179,6 @@ if __name__ == '__main__':
     # 命令行参数 -e 获取环境变量作为输入，-c 读取配置文件,默认手动输入
     USERNAME, PASSWORD ,URL= get_username_password()
     print(f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}")
-    print(URL)
+    print(os.environ.get("keyUrl"))
     # send_data(f"{USERNAME}: 开始执行查寝任务")
     # CQ().start()
