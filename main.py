@@ -5,7 +5,9 @@ import base64
 import ddddocr
 import feapder
 import argparse
-import configparser
+
+from env import *
+from feapder.utils.log import log
 
 
 class CQ(feapder.AirSpider):
@@ -120,20 +122,17 @@ class CQ(feapder.AirSpider):
 
 
 def get_username_password_from_env():
-    username = os.environ.get("loginUserName")
-    password = os.environ.get("loginPassword")
-    if username and password:
-        return username, password
-    else:
-        return None, None
+    username = os.environ.get("LOGIN_USERNAME")
+    password = os.environ.get("LOGIN_PASSWORD")
+    return username, password
 
 
 def get_username_password_from_config(config_file, section):
     config = configparser.ConfigParser()
     config.read(config_file)
     if config.has_section(section):
-        username = config.get(section, 'username')
-        password = config.get(section, 'password')
+        username = config.get(section, 'LOGIN_USERNAME')
+        password = config.get(section, 'LOGIN_PASSWORD')
         return username, password
     else:
         return None, None
@@ -156,6 +155,7 @@ def get_username_password():
     if args.env:
         return get_username_password_from_env()
     elif args.config:
+        set_setting_from_config(args.config, "setting")
         return get_username_password_from_config(args.config, 'loginInfo')
     elif args.username and args.password:
         return args.username, args.password
@@ -164,7 +164,7 @@ def get_username_password():
 
 
 if __name__ == '__main__':
-    # 命令行参数 -e 获取环境变量作为输入，-c 读取配置文件,默认手动输入
+    set_setting_from_env()
     USERNAME, PASSWORD = get_username_password()
     print(f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}")
     print(f"用户名：{USERNAME}")
