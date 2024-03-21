@@ -1,5 +1,4 @@
 import sys
-import feapder.utils.tools as tools
 import execjs
 import base64
 import ddddocr
@@ -188,6 +187,7 @@ def get_username_password():
     args = parser.parse_args()
 
     if args.env:
+        set_setting_from_env()
         return get_username_password_from_env()
     elif args.config:
         set_setting_from_config(args.config, "setting")
@@ -199,7 +199,6 @@ def get_username_password():
 
 
 if __name__ == '__main__':
-    set_setting_from_env()
     USERNAME, PASSWORD = get_username_password()
     if USERNAME and PASSWORD:
         CQ().start()
