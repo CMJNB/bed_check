@@ -29,5 +29,5 @@ jobs:
       env:
         LOGIN_USERNAME: ${{ secrets.LOGIN_USERNAME }}
         LOGIN_PASSWORD: ${{ secrets.LOGIN_PASSWORD }}
-        WECHAT_WARNING_URL: ${{ WECHAT_WARNING_URL }}
-        WECHAT_WARNING_PHONE: ${{ WECHAT_WARNING_PHONE }}
+        WECHAT_WARNING_URL: ${{ secrets.WECHAT_WARNING_URL }}
+        WECHAT_WARNING_PHONE: ${{ secrets.WECHAT_WARNING_PHONE }}
