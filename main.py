@@ -166,7 +166,7 @@ def get_username_password():
 
 
 def send_data(string):
-    url='https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=aa1a6fc9-5480-42a9-b1b3-7e0ca261f579'
+    url=os.environ.get("keyUrl")
     data = {
         "msgtype": "text",
         "text": {
@@ -179,6 +179,5 @@ if __name__ == '__main__':
     # 命令行参数 -e 获取环境变量作为输入，-c 读取配置文件,默认手动输入
     USERNAME, PASSWORD ,URL= get_username_password()
     print(f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}")
-    print(os.environ.get("keyUrl"))
-    # send_data(f"{USERNAME}: 开始执行查寝任务")
+    send_data(f"{USERNAME}: 测试消息")
     # CQ().start()
