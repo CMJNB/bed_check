@@ -170,7 +170,7 @@ def send_data(string):
     data = {
         "msgtype": "text",
         "text": {
-            "content": f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}-{string}",
+            "content": f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(time.time()))} {string}",
         }
     }
     requests.post(url, json=data)
