@@ -11,6 +11,14 @@ from feapder.utils.log import log
 
 
 class CQ(feapder.AirSpider):
+    class InfoError(Exception):
+        def __init__(self, *args, **kwargs):  # real signature unknown
+            pass
+
+    class CodeError(Exception):
+        def __init__(self, *args, code='', code_result='', **kwargs):  # real signature unknown
+            self.code = code
+            self.code_result = code_result
 
     def start_requests(self):
         log.info("开始执行")
@@ -23,8 +31,8 @@ class CQ(feapder.AirSpider):
         login_url = "https://ids.gzist.edu.cn/lyuapServer/v1/tickets"
         uid = response.json["uid"]
         code_base64_str = response.json["content"].split(",")[-1]
-        code_result = self.code_ocr(code_base64_str)
-        print(f"验证码结果：{code_result}")
+        code, code_result = self.code_ocr(code_base64_str)
+        log.info(f"验证码: {code};答案: {code_result}")
         post_data = {
             "username": USERNAME,
             "password": self.encrypt_password(PASSWORD),
@@ -36,19 +44,19 @@ class CQ(feapder.AirSpider):
         try:
             params = {"ticket": login_response["ticket"]}
         except KeyError:
-            if login_response["data"]["code"] == 'NOUSER':
-                print("用户名错误")
-                return
-            elif login_response["data"]["code"] == 'PASSERROR':
-                print("密码错误")
-                return
-            elif login_response["data"]["code"] == 'CODEFALSE':
-                print("验证码错误")
-                raise Exception(fr"验证码错误,尝试重新运行,{request.retry_times}")
-            elif login_response["data"]["code"] == 'ISMODIFYPASS':
-                print("密码未修改")
-                return
-            raise Exception(fr"发生未知错误,尝试重新运行,{request.retry_times}")
+            data_code = login_response["data"]["code"]
+            if data_code == 'NOUSER':
+                raise self.InfoError(fr"用户名错误")
+            elif data_code == 'PASSERROR':
+                raise self.InfoError(fr"密码错误")
+            elif data_code == 'CODEFALSE':
+                raise self.CodeError(fr"验证码错误,尝试重新运行,{request.retry_times}", code=code,
+                                     code_result=code_result)
+            elif data_code == 'ISMODIFYPASS':
+                raise self.InfoError(fr"密码未修改")
+            raise KeyError(fr"返回值未知,尝试重新运行: {login_response}")
+        except Exception as e:
+            raise Exception(fr"发生未知错误,尝试重新运行: {e}")
         jump_url = "https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/*default/index.do"
         yield feapder.Request(
             url=jump_url,
@@ -79,6 +87,21 @@ class CQ(feapder.AirSpider):
     def parse(self, request, response):
         result = response.json["msg"]
         print(fr"查寝结果：{result}")
+
+    def exception_request(self, request, response, e: Exception):
+        if type(e) is self.InfoError:
+            self.send_msg(f"{e}", "ERROR")
+            self.stop_spider()
+            tools.delay_time(1)
+        elif type(e) is self.CodeError:
+            self.send_msg(f"验证码错误\n验证码:{e.code}\n答案:{e.code_result}", "ERROR")
+        elif type(e) is KeyError:
+            self.send_msg(f"返回值未知：{e}", "ERROR")
+        elif type(e) is Exception:
+            self.send_msg(f"发生未知错误：{e}", "ERROR")
+
+        log.error(f"::error:: {e}")
+
     @staticmethod
     def send_msg(msg, level="DEBUG", message_prefix=""):
         msg = f"{USERNAME}\n{msg}"
@@ -88,13 +111,12 @@ class CQ(feapder.AirSpider):
     def code_ocr(self, code_base64_str):
         replace_str = {"o": "0", "O": "0", "l": "1", "i": "1", "I": "1", "s": "5", "S": "5", "b": "6", "B": "8"}
         ocr = ddddocr.DdddOcr(show_ad=False)
-        res = ocr.classification(self.base64_to_byte(code_base64_str))
+        code = ocr.classification(self.base64_to_byte(code_base64_str))
         for key, value in replace_str.items():
-            if key in res:
-                res = res.replace(key, value)
-        print(f"验证码：{res}")
-        code_result = eval(res[0:-1])
-        return code_result
+            if key in code:
+                code = code.replace(key, value)
+        code_result = eval(code[0:-1])
+        return code, code_result
 
     # base64字符串转二进制流
     @staticmethod
