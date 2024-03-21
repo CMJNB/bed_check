@@ -8,6 +8,7 @@ import argparse
 import configparser
 import requests
 
+
 class CQ(feapder.AirSpider):
     __custom_setting__ = dict(
         SPIDER_MAX_RETRY_TIMES=3,
@@ -123,9 +124,8 @@ class CQ(feapder.AirSpider):
 def get_username_password_from_env():
     username = os.environ.get("loginUserName")
     password = os.environ.get("loginPassword")
-    url=os.environ.get("keyUrl")
     if username and password:
-        return username, password,url
+        return username, password
     else:
         return None, None
 
@@ -166,18 +166,17 @@ def get_username_password():
 
 
 def send_data(string):
-    url=os.environ.get("keyUrl")
+    url = os.environ.get("keyUrl")
     data = {
         "msgtype": "text",
         "text": {
-            "content": string,
+            "content": f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}-{string}",
         }
     }
     requests.post(url, json=data)
 
 if __name__ == '__main__':
     # 命令行参数 -e 获取环境变量作为输入，-c 读取配置文件,默认手动输入
-    USERNAME, PASSWORD ,URL= get_username_password()
+    USERNAME, PASSWORD = get_username_password()
     print(f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}")
-    send_data(f"{USERNAME}: 测试消息")
-    # CQ().start()
+    CQ().start()
