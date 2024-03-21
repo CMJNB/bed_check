@@ -42,7 +42,7 @@
 # SPIDER_THREAD_COUNT = 1  # 爬虫并发数，追求速度推荐32
 # # 下载时间间隔 单位秒。 支持随机 如 SPIDER_SLEEP_TIME = [2, 5] 则间隔为 2~5秒之间的随机数，包含2和5
 # SPIDER_SLEEP_TIME = 0
-# SPIDER_MAX_RETRY_TIMES = 10  # 每个请求最大重试次数
+SPIDER_MAX_RETRY_TIMES = 3  # 每个请求最大重试次数
 # KEEP_ALIVE = False  # 爬虫是否常驻
 
 # 下载
@@ -159,12 +159,12 @@
 # WECHAT_WARNING_ALL = False  # 是否提示所有人， 默认为False
 # # 时间间隔
 # WARNING_INTERVAL = 3600  # 相同报警的报警时间间隔，防止刷屏; 0表示不去重
-# WARNING_LEVEL = "DEBUG"  # 报警级别， DEBUG / INFO / ERROR
+WARNING_LEVEL = "INFO"  # 报警级别， DEBUG / INFO / ERROR
 # WARNING_FAILED_COUNT = 1000  # 任务失败数 超过WARNING_FAILED_COUNT则报警
 #
 # LOG_NAME = os.path.basename(os.getcwd())
 # LOG_PATH = "log/%s.log" % LOG_NAME  # log存储路径
-# LOG_LEVEL = "DEBUG"
+LOG_LEVEL = "INFO"  # 日志级别大小关系为：CRITICAL > ERROR > WARNING > INFO > DEBUG
 # LOG_COLOR = True  # 是否带有颜色
 # LOG_IS_WRITE_TO_CONSOLE = True  # 是否打印到控制台
 # LOG_IS_WRITE_TO_FILE = False  # 是否写文件

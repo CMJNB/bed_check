@@ -11,10 +11,6 @@ from feapder.utils.log import log
 
 
 class CQ(feapder.AirSpider):
-    __custom_setting__ = dict(
-        SPIDER_MAX_RETRY_TIMES=3,
-        LOG_LEVEL="INFO",
-    )
 
     def start_requests(self):
         log.info("开始执行")
