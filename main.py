@@ -53,7 +53,9 @@ class CQ(feapder.AirSpider):
                                      code_result=code_result)
             elif data_code == 'ISMODIFYPASS':
                 raise self.InfoError(fr"密码未修改")
-            raise KeyError(fr"返回值未知,尝试重新运行: {login_response}")
+            elif data_code == 'ISPHONEOREMAILORANSWER':
+                raise self.InfoError(fr"未绑定手机或邮箱或密保问题")
+            raise KeyError(fr"返回值未知,尝试重新运行: {data_code}")
         except Exception as e:
             raise Exception(fr"发生未知错误,尝试重新运行: {e}")
         jump_url = "https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/*default/index.do"
