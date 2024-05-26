@@ -1,4 +1,6 @@
 import sys
+import random
+
 import execjs
 import base64
 import ddddocr
@@ -53,13 +55,20 @@ class CQ(feapder.AirSpider):
                                      code_result=code_result)
             elif data_code == 'ISMODIFYPASS':
                 raise self.InfoError(fr"密码未修改")
-            raise KeyError(fr"返回值未知,尝试重新运行: {login_response}")
+            elif data_code == 'ISPHONEOREMAILORANSWER':
+                raise self.InfoError(fr"未绑定手机或邮箱或密保问题")
+            raise KeyError(fr"返回值未知,尝试重新运行: {data_code}")
         except Exception as e:
             raise Exception(fr"发生未知错误,尝试重新运行: {e}")
         jump_url = "https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/*default/index.do"
         yield feapder.Request(
             url=jump_url,
             callback=self.parse_getSelRoleConfig,
+            params=params)
+
+        yield feapder.Request(
+            url=jump_url,
+            callback=self.parse_getWeekendSelRoleConfig,
             params=params)
 
     def parse_getSelRoleConfig(self, request, response):
@@ -75,12 +84,40 @@ class CQ(feapder.AirSpider):
             cookies=cookies,
             json=json)
 
+    def parse_getWeekendSelRoleConfig(self, request, response):
+        url = "https://xsfw.gzist.edu.cn/xsfw/sys/swpubapp/MobileCommon/getSelRoleConfig.do"
+        cookies = response.cookies
+        data = {
+            'data': '{"APPID":"6390414391613368","APPNAME":"swmqdzsapp"}',
+        }
+        yield feapder.Request(
+            'https://xsfw.gzist.edu.cn/xsfw/sys/swpubapp/MobileCommon/getSelRoleConfig.do',
+            cookies=cookies,
+            data=data,
+            callback=self.parse_weekendSignUp
+        )
+
     def parse_done(self, request, response):
         url = "https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/modules/studentCheckController/uniFormSignUp.do"
         cookies = response.cookies
         yield feapder.Request(
             url,
             callback=self.parse,
+            cookies=cookies)
+
+    def parse_weekendSignUp(self, request, response):
+        url = "https://xsfw.gzist.edu.cn/xsfw/sys/swmqdzsapp/MobileJrqdController/doSignIn.do"
+        cookies = response.cookies
+        Latitude = round(23.260000 + random.uniform(0.000001, 0.001) * random.choice([1, -1]), 5)
+        longitude = round(113.450000 + random.uniform(0.000001, 0.001) * random.choice([1, -1]), 5)
+        data = {
+            'data': f'{'{'}"SFFWN":"0","DDMC":"广州理工学院","QDJD":{Latitude},"QDWD":{longitude} ,'
+                    f'"RWBH":"188D6E936CB43368E0630717000A737C","QDPL":"2"{'}'}',
+        }
+        yield feapder.Request(
+            url,
+            callback=self.parse_weekend,
+            params=data,
             cookies=cookies)
 
     def parse(self, request, response):
@@ -93,6 +130,18 @@ class CQ(feapder.AirSpider):
             elif result == ' 您已签到,请勿重复签到':
                 pass
             log.info(fr"查寝结果：{result}")
+            self.send_msg(result, "INFO")
+        except Exception as e:
+            log.error(f"::error:: 查寝失败，结果未知：{e}")
+
+    def parse_weekend(self, request, response):
+        try:
+            result = response.json.get("data").get("prompt")
+            if result == '今天无需周末签到':
+                log.warning(f"::warning:: {result}")
+                self.send_msg(result, "INFO")
+                return
+            log.info(fr"zhou：{result}")
             self.send_msg(result, "INFO")
         except Exception as e:
             log.error(f"::error:: 查寝失败，结果未知：{e}")
