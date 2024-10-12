@@ -4,6 +4,7 @@ import base64
 import ddddocr
 import feapder
 import argparse
+from tools import send_msg
 
 from env import *
 from feapder.utils.log import log
@@ -116,7 +117,7 @@ class CQ(feapder.AirSpider):
     @staticmethod
     def send_msg(msg, level="DEBUG", message_prefix=""):
         msg = f"{USERNAME}\n{msg}"
-        tools.send_msg(msg, level=level, message_prefix=message_prefix)
+        send_msg(msg, level=level, message_prefix=message_prefix)
 
     # 识别验证码
     def code_ocr(self, code_base64_str):
