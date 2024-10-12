@@ -31,8 +31,11 @@ class CQ(feapder.AirSpider):
         login_url = "https://ids.gzist.edu.cn/lyuapServer/v1/tickets"
         uid = response.json["uid"]
         code_base64_str = response.json["content"].split(",")[-1]
-        code, code_result = self.code_ocr(code_base64_str)
-        log.info(f"验证码: {code};答案: {code_result}")
+        if code_base64_str == '-1':
+            code_result = None
+        else:
+            code, code_result = self.code_ocr(code_base64_str)
+            log.info(f"验证码: {code};答案: {code_result}")
         post_data = {
             "username": USERNAME,
             "password": self.encrypt_password(PASSWORD),
